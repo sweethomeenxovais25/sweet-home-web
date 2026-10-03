@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase";
 import { 
   LayoutDashboard, ShoppingCart, CircleDollarSign, 
   Package, Megaphone, LogOut, ShieldCheck, 
-  FileArchive, Radar, Server, Menu, X 
+  FileArchive, Radar, Server, Menu, X, Store // 👈 Importei o Store da loja
 } from "lucide-react";
 import { usePerfil } from "@/contexts/PerfilContext";
 
@@ -26,7 +26,7 @@ export default function Sidebar() {
   const handleSair = async (e: React.MouseEvent) => {
     e.preventDefault(); 
     await supabase.auth.signOut(); 
-    window.location.href = "/"; 
+    window.location.href = "/"; // 🚀 Manda a Bia de volta pra loja dela!
   };
 
   const fecharMenu = () => setMenuMobileAberto(false);
@@ -119,11 +119,28 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Botão de Sair */}
-        <div className="p-3 mb-2 shrink-0 md:border-t border-stone-800/50 md:pt-4">
+        {/* 👇 BLOCO DE AÇÕES INFERIORES: Ver a Loja e Sair */}
+        <div className="p-3 mb-2 shrink-0 md:border-t border-stone-800/50 md:pt-4 flex flex-col gap-2">
+          
+          {/* BOTÃO IR PARA A VITRINE */}
+          <Link 
+            href="/" 
+            className="flex items-center gap-4 w-full group/item"
+            title="Acessar Vitrine da Loja"
+          >
+            <div className="w-12 h-12 rounded-full bg-stone-800 text-stone-400 flex items-center justify-center shrink-0 transition-all duration-300 ease-out md:group-hover/item:scale-110 group-hover/item:bg-amber-900 group-hover/item:text-amber-400 group-hover/item:shadow-[0_0_15px_rgba(217,119,6,0.3)]">
+              <Store size={22} />
+            </div>
+            <span className="opacity-100 whitespace-nowrap font-medium text-stone-400 transition-all duration-300 origin-left md:scale-95 md:opacity-0 md:group-hover:opacity-100 md:group-hover:scale-100 group-hover/item:text-amber-400">
+              Ver Loja (Web)
+            </span>
+          </Link>
+
+          {/* BOTÃO DE SAIR */}
           <button 
             onClick={handleSair} 
             className="flex items-center gap-4 w-full group/item"
+            title="Fazer Logoff"
           >
             <div className="w-12 h-12 rounded-full bg-stone-800 text-stone-400 flex items-center justify-center shrink-0 transition-all duration-300 ease-out md:group-hover/item:scale-110 group-hover/item:bg-red-950 group-hover/item:text-red-400 group-hover/item:shadow-[0_0_15px_rgba(239,68,68,0.3)]">
               <LogOut size={22} />
@@ -133,6 +150,7 @@ export default function Sidebar() {
             </span>
           </button>
         </div>
+
       </aside>
     </>
   );
