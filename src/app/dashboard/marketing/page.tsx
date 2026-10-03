@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 import { 
   Megaphone, LayoutGrid, CalendarDays, Wand2, 
-  BarChart2, Share2, Plus, Instagram, Youtube, 
+  BarChart2, Share2, Plus,
   CheckCircle2, Loader2, PlaySquare, Image as ImageIcon,
   MoreVertical, Clock, TrendingUp, Users, Link2, Sparkles,
-  FileText, Music, Hash, Trash2, Edit3, Type, Timer, Search // 👈 A Lupa do Google voltou para casa!
+  FileText, Music, Hash, Trash2, Edit3, Type, Timer, Search
 } from "lucide-react";
 
 // 🚀 BANCO DE DADOS DO KANBAN (Refatorado para o Drag & Drop funcionar)
