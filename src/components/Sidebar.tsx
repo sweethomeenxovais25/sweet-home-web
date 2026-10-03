@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase";
 import { 
   LayoutDashboard, ShoppingCart, CircleDollarSign, 
   Package, Megaphone, LogOut, ShieldCheck, 
-  FileArchive, Radar, Server, Menu, X, Store // 👈 Importei o Store da loja
+  FileArchive, Radar, Server, Menu, X 
 } from "lucide-react";
 import { usePerfil } from "@/contexts/PerfilContext";
 
@@ -16,7 +16,7 @@ export default function Sidebar() {
   const router = useRouter(); 
   const supabase = createClient();
   
-  // 📱 Estado para controlar o menu no celular (ELE VOLTOU!)
+  // 📱 Estado para controlar o menu no celular
   const [menuMobileAberto, setMenuMobileAberto] = useState(false);
 
   // 🪄 Descobrimos qual é o cargo/nível da pessoa logada
@@ -26,7 +26,7 @@ export default function Sidebar() {
   const handleSair = async (e: React.MouseEvent) => {
     e.preventDefault(); 
     await supabase.auth.signOut(); 
-    window.location.href = "/"; // 🚀 Manda a Bia de volta pra loja dela!
+    window.location.href = "/"; 
   };
 
   const fecharMenu = () => setMenuMobileAberto(false);
@@ -46,8 +46,7 @@ export default function Sidebar() {
     { nome: "Governança", rota: "/dashboard/governanca", Icone: Radar, adminOnly: true },
   ];
 
-  // 🛡️ FILTRO DE SEGURANÇA CORRIGIDO:
-  // Se não tiver nível cadastrado (!nivel), ele libera para não te prender no seu próprio sistema!
+  // 🛡️ FILTRO DE SEGURANÇA
   const isDiretoria = !nivel || nivel === "Administrador" || nivel === "CEO" || nivel === "Diretor" || nivel === "Gerente" || nivel.includes("Admin");
   
   const menuFiltrado = menuItems.filter(item => {
@@ -57,7 +56,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* 📱 BOTÃO FLUTUANTE MOBILE (Para a sua irmã acessar da loja) */}
+      {/* 📱 BOTÃO FLUTUANTE MOBILE */}
       <button 
         onClick={() => setMenuMobileAberto(true)}
         className="md:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#A67B5B] text-white rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(166,123,91,0.5)] active:scale-95 transition-transform"
@@ -73,7 +72,7 @@ export default function Sidebar() {
         />
       )}
 
-      {/* 🖥️ A NOSSA SIDEBAR HÍBRIDA (Responsiva + Trava de Segurança) */}
+      {/* 🖥️ SIDEBAR HÍBRIDA */}
       <aside className={`fixed z-[70] flex flex-col overflow-hidden bg-stone-900 border-stone-800 transition-all duration-300 ease-out shadow-2xl group
         ${menuMobileAberto ? "translate-x-0" : "-translate-x-full"} 
         inset-y-0 left-0 w-64 border-r rounded-r-[2rem] md:border-r-0
@@ -88,7 +87,7 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* Container de navegação (Scroll invisível garantido!) */}
+        {/* NAVEGAÇÃO */}
         <nav className="flex-1 py-6 px-3 space-y-4 overflow-y-auto overflow-x-hidden flex flex-col items-start md:mt-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {menuFiltrado.map((item) => {
             const isAtivo = pathname === item.rota;
@@ -119,28 +118,11 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* 👇 BLOCO DE AÇÕES INFERIORES: Ver a Loja e Sair */}
-        <div className="p-3 mb-2 shrink-0 md:border-t border-stone-800/50 md:pt-4 flex flex-col gap-2">
-          
-          {/* BOTÃO IR PARA A VITRINE */}
-          <Link 
-            href="/" 
-            className="flex items-center gap-4 w-full group/item"
-            title="Acessar Vitrine da Loja"
-          >
-            <div className="w-12 h-12 rounded-full bg-stone-800 text-stone-400 flex items-center justify-center shrink-0 transition-all duration-300 ease-out md:group-hover/item:scale-110 group-hover/item:bg-amber-900 group-hover/item:text-amber-400 group-hover/item:shadow-[0_0_15px_rgba(217,119,6,0.3)]">
-              <Store size={22} />
-            </div>
-            <span className="opacity-100 whitespace-nowrap font-medium text-stone-400 transition-all duration-300 origin-left md:scale-95 md:opacity-0 md:group-hover:opacity-100 md:group-hover:scale-100 group-hover/item:text-amber-400">
-              Ver Loja (Web)
-            </span>
-          </Link>
-
-          {/* BOTÃO DE SAIR */}
+        {/* BOTÃO DE SAIR */}
+        <div className="p-3 mb-2 shrink-0 md:border-t border-stone-800/50 md:pt-4">
           <button 
             onClick={handleSair} 
             className="flex items-center gap-4 w-full group/item"
-            title="Fazer Logoff"
           >
             <div className="w-12 h-12 rounded-full bg-stone-800 text-stone-400 flex items-center justify-center shrink-0 transition-all duration-300 ease-out md:group-hover/item:scale-110 group-hover/item:bg-red-950 group-hover/item:text-red-400 group-hover/item:shadow-[0_0_15px_rgba(239,68,68,0.3)]">
               <LogOut size={22} />
@@ -150,7 +132,6 @@ export default function Sidebar() {
             </span>
           </button>
         </div>
-
       </aside>
     </>
   );

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 import { 
   Megaphone, LayoutGrid, CalendarDays, Wand2, 
-  BarChart2, Share2, Plus,
+  BarChart2, Share2, Plus, Camera,
   CheckCircle2, Loader2, PlaySquare, Image as ImageIcon,
   MoreVertical, Clock, TrendingUp, Users, Link2, Sparkles,
   FileText, Music, Hash, Trash2, Edit3, Type, Timer, Search
@@ -163,7 +163,7 @@ Toque no link da nossa BIO e garanta o seu antes que o lote esgote! 🌙✨
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-[2rem] p-6 text-white shadow-lg relative overflow-hidden group">
               <div className="absolute top-4 right-4 bg-white/20 p-3 rounded-2xl backdrop-blur-sm group-hover:scale-110 transition-transform">
-                <Instagram size={28} />
+                <Camera size={28} />
               </div>
               <h3 className="text-sm font-bold uppercase tracking-widest opacity-80 mb-1">Instagram Alcance</h3>
               <div className="text-4xl font-black mb-4">124.5K <span className="text-sm font-medium opacity-80">contas</span></div>
@@ -583,7 +583,7 @@ Toque no link da nossa BIO e garanta o seu antes que o lote esgote! 🌙✨
             {/* META APP (Instagram / Facebook) */}
             <div className="p-6 rounded-2xl border-2 border-stone-200 dark:border-stone-700 flex flex-col sm:flex-row gap-6 items-center sm:items-start group hover:border-[#E1306C] transition-colors relative overflow-hidden">
               <div className="w-16 h-16 bg-gradient-to-br from-purple-600 via-[#E1306C] to-yellow-500 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg group-hover:scale-110 transition-transform">
-                <Instagram size={32} />
+                <Camera size={32} />
               </div>
               <div className="flex-1 text-center sm:text-left">
                 <div className="flex justify-center sm:justify-between items-center mb-1 gap-2 flex-wrap">

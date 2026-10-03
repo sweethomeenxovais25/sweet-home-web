@@ -1,29 +1,58 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
-  // O segurança olha para o caminho que o usuário quer acessar
-  const path = request.nextUrl.pathname;
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
 
-  // Se o caminho for a área de admin...
-  if (path.startsWith('/admin')) {
-    // Ele procura pelo "crachá" (neste caso, um cookie de autenticação que criaremos depois)
-    const temCracha = request.cookies.has('sb-auth-token'); 
-
-    // Para fins de teste no nosso 360, vamos deixar a porta "encostada",
-    // mas já estruturada. Se quiser trancar de vez agora, mude a linha abaixo para `!temCracha`.
-    const trancarAgora = false; 
-
-    if (trancarAgora) {
-      // Se não tiver o crachá, redireciona para uma página de login
-      return NextResponse.redirect(new URL('/login', request.url));
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          response = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
     }
+  )
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Se tentar acessar o /dashboard e não tiver usuário, chuta para o /login
+  if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  return NextResponse.next();
+  // Se tentar ir pro admin, mesma coisa
+  if (request.nextUrl.pathname.startsWith('/admin') && !user) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // Se já estiver logado e tentar ir pro login de novo, manda pro dashboard
+  if (request.nextUrl.pathname === '/login' && user) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  return response
 }
 
-// Dizemos ao segurança para vigiar apenas as rotas que importam
 export const config = {
-  matcher: ['/admin/:path*'],
-};
+  matcher: [
+    '/dashboard/:path*', 
+    '/admin/:path*',
+    '/login'
+  ],
+}
