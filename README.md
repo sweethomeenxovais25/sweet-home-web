@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏡 Sweet Home Omni (E-commerce + GestoBap ERP)
 
-## Getting Started
+Bem-vindo ao repositório oficial da **Sweet Home Enxovais**. Este projeto adota a arquitetura **Monorepo (Headless Commerce)**, unificando a vitrine pública de e-commerce e o sistema de gestão corporativa (ERP GestoBap) no mesmo ecossistema Next.js, conectados a um banco de dados único (Supabase).
 
-First, run the development server:
+## 🚀 Arquitetura e Tech Stack
+* **Framework:** Next.js (App Router)
+* **Banco de Dados & Auth:** Supabase (PostgreSQL)
+* **Estilização:** Tailwind CSS
+* **Ícones:** Lucide-react
+* **Notificações:** Sonner
+* **Deploy e Hosting:** Vercel
+* **DNS e Segurança:** Cloudflare
+* **Ambiente de Desenvolvimento:** GitHub Codespaces
+
+## 📂 Estrutura de Pastas (Monorepo)
+* `/src/app/page.tsx`: Vitrine pública (E-commerce).
+* `/src/app/dashboard/*`: Sistema de Gestão ERP (GestoBap) - **Acesso Restrito**.
+* `/src/components/*`: Componentes de UI reaproveitáveis (Botões, Modais, Sidebar).
+* `/src/lib/`: Conexões e instâncias de APIs (ex: `supabase.ts`).
+* `/middleware.ts`: Cão de guarda de rotas (Protege o `/dashboard` de acessos não autorizados).
+
+---
+
+## 📖 Diário de Bordo (Change Log)
+
+### 📌 [Versão 1.0] - O Grande Transplante (Integração GestoBap) - *Outubro 2026*
+**Objetivo:** Trazer os módulos operacionais do GestoBap para dentro da estrutura da Sweet Home Web, sem quebrar a vitrine existente.
+
+**Ações Realizadas:**
+- [x] **Decisão Arquitetural:** Escolha do modelo Monorepo (Opção A) para facilitar a manutenção e compartilhar o mesmo banco de dados em tempo real.
+- [x] **Migração de Pastas:** Transplante bem-sucedido das pastas `dashboard`, `components`, `contexts` e `lib` do repositório da Baply para a Sweet Home Web via terminal.
+- [x] **Injeção de Dependências:** Instalação das bibliotecas core do ERP (`@supabase/supabase-js`, `lucide-react`, `sonner`).
+- [x] **Segurança:** Criação do `middleware.ts` para interceptar usuários não logados tentando acessar a rota `/dashboard`.
+- [x] **Conexão:** Preparação do `.env.local` para receber as chaves do Supabase.
+
+---
+
+## 💻 Primeiros Passos (Para Desenvolvedores)
+
+Este é um projeto [Next.js](https://nextjs.org) inicializado com [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+Como estamos utilizando o **GitHub Codespaces** como ambiente de desenvolvimento principal, primeiro, execute o servidor local no terminal do Codespaces:
 
 ```bash
 npm run dev
-# or
+# ou
 yarn dev
-# or
+# ou
 pnpm dev
-# or
+# ou
 bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
