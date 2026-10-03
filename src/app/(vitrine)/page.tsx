@@ -2,7 +2,6 @@ import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
-import { Lock } from "lucide-react"; // 👈 Adicionamos o ícone do cadeado aqui
 
 export const revalidate = 60; 
 
@@ -114,7 +113,7 @@ export default async function Home() {
       </section>
 
       {/* 4. VITRINE DE PRODUTOS */}
-      <section className="py-24 bg-white border-t border-brand-gold/10">
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-6 text-center md:text-left">
             <div>
@@ -139,23 +138,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* 5. RODAPÉ E A PORTA SECRETA PARA O GESTOBAP 👈 NOVIDADE AQUI! */}
-      <footer className="bg-brand-brown py-8 border-t border-brand-gold/20 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-brand-base/60 text-sm font-light">
-            © {new Date().getFullYear()} Sweet Home Enxovais. Todos os direitos reservados.
-          </p>
-          
-          {/* LINK MÁGICO PARA O NOSSO ERP */}
-          <Link 
-            href="/dashboard" 
-            className="flex items-center gap-2 text-brand-gold/60 hover:text-brand-gold transition-colors text-xs uppercase tracking-widest font-bold group"
-          >
-            <Lock size={14} className="group-hover:animate-pulse" /> Área Restrita
-          </Link>
-        </div>
-      </footer>
 
     </div>
   );
