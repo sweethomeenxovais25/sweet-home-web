@@ -2,6 +2,7 @@ import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
+import { Lock } from "lucide-react"; // 👈 Adicionamos o ícone do cadeado aqui
 
 export const revalidate = 60; 
 
@@ -80,7 +81,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 3. BENTO GRID - Módulos de Coleções (O efeito Odoo elevado ao quadrado) */}
+      {/* 3. BENTO GRID - Módulos de Coleções */}
       <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-headings font-bold text-brand-brown">Explore Nossas Coleções</h2>
@@ -90,9 +91,7 @@ export default async function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:auto-rows-[350px]">
           
-          {/* Módulo Grande (Cama) */}
           <Link href="/categorias?tipo=cama" className="md:col-span-8 relative rounded-3xl overflow-hidden group shadow-lg">
-            {/* Gradiente escuro no rodapé da imagem para dar leitura ao texto */}
             <div className="absolute inset-0 bg-gradient-to-t from-brand-brown/90 via-brand-brown/20 to-transparent z-10 transition-opacity duration-500 group-hover:opacity-80"></div>
             <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=2071&auto=format&fit=crop" alt="Cama" className="absolute inset-0 w-full h-full object-cover transform transition-transform duration-1000 group-hover:scale-110" />
             <div className="absolute bottom-10 left-10 z-20 flex flex-col items-start transform transition-transform duration-500 group-hover:-translate-y-2">
@@ -102,7 +101,6 @@ export default async function Home() {
             </div>
           </Link>
 
-          {/* Módulo Menor (Banho) */}
           <Link href="/categorias?tipo=banho" className="md:col-span-4 relative rounded-3xl overflow-hidden group shadow-lg">
             <div className="absolute inset-0 bg-gradient-to-t from-brand-brown/90 via-brand-brown/30 to-transparent z-10 transition-opacity duration-500 group-hover:opacity-80"></div>
             <img src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=1974&auto=format&fit=crop" alt="Banho" className="absolute inset-0 w-full h-full object-cover transform transition-transform duration-1000 group-hover:scale-110" />
@@ -115,7 +113,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 4. VITRINE DE PRODUTOS (Clean e Focada) */}
+      {/* 4. VITRINE DE PRODUTOS */}
       <section className="py-24 bg-white border-t border-brand-gold/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-6 text-center md:text-left">
@@ -141,6 +139,23 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* 5. RODAPÉ E A PORTA SECRETA PARA O GESTOBAP 👈 NOVIDADE AQUI! */}
+      <footer className="bg-brand-brown py-8 border-t border-brand-gold/20 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-brand-base/60 text-sm font-light">
+            © {new Date().getFullYear()} Sweet Home Enxovais. Todos os direitos reservados.
+          </p>
+          
+          {/* LINK MÁGICO PARA O NOSSO ERP */}
+          <Link 
+            href="/dashboard" 
+            className="flex items-center gap-2 text-brand-gold/60 hover:text-brand-gold transition-colors text-xs uppercase tracking-widest font-bold group"
+          >
+            <Lock size={14} className="group-hover:animate-pulse" /> Área Restrita
+          </Link>
+        </div>
+      </footer>
 
     </div>
   );
