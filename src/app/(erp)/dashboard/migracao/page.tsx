@@ -61,7 +61,7 @@ export default function MigracaoPage() {
     setProcessando(true);
     addLog("🚀 Iniciando motor de injeção no Supabase...");
     
-    // Força limpeza do cache do Supabase
+    // Força limpeza do cache da API via frontend
     await supabase.rpc('pgrst_reload_schema'); 
 
     let paisCriados: Record<string, string> = {}; 
@@ -85,15 +85,15 @@ export default function MigracaoPage() {
       try {
         let idPai = paisCriados[baseCod];
 
-        // 1. SE O PAI AINDA NÃO EXISTE, CRIA ELE (PAYLOAD SIMPLIFICADO)
         if (!idPai) {
           addLog(`📦 Criando Produto Pai: ${baseCod}`);
           
-          // O Erro 400 Bad Request acontecia aqui. Removemos colunas polêmicas (descricao, is_destaque) 
-          // e deixamos o banco usar seus próprios valores DEFAULT.
+          // Enviando o payload completo. Como recriamos a tabela e tiramos o RLS, isso vai voar.
           const { data: paiData, error: paiError } = await supabase.from('produtos').insert({
             nome_base: nomeProduto.split('-')[0].trim(),
-            categoria: "Geral"
+            descricao: "Migrado da planilha antiga.",
+            categoria: "Geral",
+            is_destaque: true
           }).select('id').single();
 
           if (paiError) throw paiError;
@@ -123,7 +123,9 @@ export default function MigracaoPage() {
           countSucesso++;
         }
       } catch (err: any) {
-        addLog(`❌ Falha no código ${codProduto}: ${err.message || 'Erro HTTP 400: Estrutura recusada'}`);
+        // Captura e imprime o JSON do erro para sabermos exatamente o motivo
+        const erroReal = err?.message || JSON.stringify(err);
+        addLog(`❌ Falha no código ${codProduto}: ${erroReal}`);
       }
     }
 
