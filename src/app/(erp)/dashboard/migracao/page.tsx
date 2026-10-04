@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { toast } from "sonner";
-import { Database, UploadCloud, CheckCircle2, Loader2, ArrowRight, FileSpreadsheet, XCircle } from "lucide-react";
+import { Database, UploadCloud, CheckCircle2, Loader2, ArrowRight, FileSpreadsheet, XCircle, Link as LinkIcon } from "lucide-react";
 import Papa from "papaparse";
 
 export default function MigracaoPage() {
@@ -15,15 +15,37 @@ export default function MigracaoPage() {
 
   const addLog = (msg: string) => setLogs(prev => [...prev, msg]);
 
-  const limparMoeda = (val: string) => {
+  // 🛡️ O EXTRATOR BLINDADO DE NÚMEROS (Adeus erro R$ R$)
+  const limparMoeda = (val: string | number) => {
     if (!val) return 0.0;
-    let limpo = String(val).replace('R$', '').replace(/\s/g, '').trim();
-    if (limpo.includes(',') && limpo.includes('.')) {
-      return parseFloat(limpo.replace(/\./g, '').replace(',', '.'));
+    // Pega a string e arranca TUDO que não seja número, vírgula ou ponto
+    let limpo = String(val).replace(/[^\d.,]/g, '').trim();
+    if (!limpo) return 0.0;
+    
+    // Converte o padrão Brasileiro (1.500,00) para o padrão Americano de Banco de Dados (1500.00)
+    if (limpo.includes('.') && limpo.includes(',')) {
+      limpo = limpo.replace(/\./g, '').replace(',', '.');
     } else if (limpo.includes(',')) {
-      return parseFloat(limpo.replace(',', '.'));
+      limpo = limpo.replace(',', '.');
     }
-    return parseFloat(limpo) || 0.0;
+    
+    const numero = parseFloat(limpo);
+    return isNaN(numero) ? 0.0 : numero; // Se ainda der pau, salva como 0 para não quebrar o banco!
+  };
+
+  // 🛡️ CAÇADOR DE COLUNAS (Lida com espaços extras e nomes alterados)
+  const getCol = (row: any, ...nomesPossiveis: string[]) => {
+    const keys = Object.keys(row);
+    for (const nome of nomesPossiveis) {
+      // Tenta achar exatamente igual (ignorando espaços no inicio/fim)
+      const exato = keys.find(k => k.trim().toUpperCase() === nome.toUpperCase());
+      if (exato) return row[exato];
+      
+      // Tenta achar contendo a palavra
+      const contem = keys.find(k => k.toUpperCase().includes(nome.toUpperCase()));
+      if (contem) return row[contem];
+    }
+    return "";
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,8 +61,9 @@ export default function MigracaoPage() {
       skipEmptyLines: true,
       complete: function(results) {
         const dadosLidos = results.data as any[];
+        
         const dadosLimpos = dadosLidos.filter(row => {
-          const cod = String(row['CÓD. PRÓDUTO'] || '');
+          const cod = String(getCol(row, 'CÓD. PRÓDUTO', 'COD') || '');
           return cod && cod.trim() !== '' && !cod.toUpperCase().includes('TOTAIS');
         });
 
@@ -70,13 +93,14 @@ export default function MigracaoPage() {
     for (let i = 0; i < dadosPrevia.length; i++) {
       const row = dadosPrevia[i];
       
-      const codProduto = String(row['CÓD. PRÓDUTO'] || '').trim();     
-      const nomeProduto = String(row['NOME DO PRODUTO'] || '').trim();    
-      const custo = limparMoeda(row['CUSTO UNITÁRIO R$']);     
-      const qtdMinima = parseInt(row['QTD MÍNIMA']) || 2; 
-      const estoqueAtual = parseInt(row['ESTOQUE ATUAL']) || 0; 
-      const precoVenda = limparMoeda(row['VALOR DE VENDA']);  
-      const linkImagem = String(row['LINK REF'] || '').trim();    
+      // Uso do Caçador Blindado para ler as colunas
+      const codProduto = String(getCol(row, 'CÓD. PRÓDUTO', 'CÓD') || '').trim();     
+      const nomeProduto = String(getCol(row, 'NOME DO PRODUTO', 'NOME') || '').trim();    
+      const custo = limparMoeda(getCol(row, 'CUSTO UNITÁRIO R$', 'CUSTO'));     
+      const qtdMinima = parseInt(getCol(row, 'QTD MÍNIMA', 'MÍNIMA')) || 2; 
+      const estoqueAtual = parseInt(getCol(row, 'ESTOQUE ATUAL', 'ESTOQUE')) || 0; 
+      const precoVenda = limparMoeda(getCol(row, 'VALOR DE VENDA', 'VENDA', 'VALOR'));  
+      const linkImagem = String(getCol(row, 'LINK REF', 'LINK', 'REF') || '').trim();    
 
       if (!codProduto) continue;
 
@@ -86,14 +110,11 @@ export default function MigracaoPage() {
         let idPai = paisCriados[baseCod];
 
         if (!idPai) {
-          addLog(`📦 Criando Produto Pai: ${baseCod}`);
+          addLog(`📦 Criando Pai: ${baseCod}`);
           
-          // Enviando o payload completo. Como recriamos a tabela e tiramos o RLS, isso vai voar.
           const { data: paiData, error: paiError } = await supabase.from('produtos').insert({
             nome_base: nomeProduto.split('-')[0].trim(),
-            descricao: "Migrado da planilha antiga.",
-            categoria: "Geral",
-            is_destaque: true
+            categoria: "Geral"
           }).select('id').single();
 
           if (paiError) throw paiError;
@@ -123,9 +144,8 @@ export default function MigracaoPage() {
           countSucesso++;
         }
       } catch (err: any) {
-        // Captura e imprime o JSON do erro para sabermos exatamente o motivo
         const erroReal = err?.message || JSON.stringify(err);
-        addLog(`❌ Falha no código ${codProduto}: ${erroReal}`);
+        addLog(`❌ Falha no cód ${codProduto}: ${erroReal}`);
       }
     }
 
@@ -175,27 +195,36 @@ export default function MigracaoPage() {
             <h3 className="text-sm font-bold text-stone-400 uppercase tracking-widest mb-3">Prévia dos Dados Lidos ({dadosPrevia.length} linhas)</h3>
             <div className="bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden h-64 overflow-y-auto">
               <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800 sticky top-0">
+                <thead className="bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800 sticky top-0 z-10 shadow-sm">
                   <tr>
                     <th className="p-3">Código</th>
                     <th className="p-3">Nome</th>
-                    <th className="p-3">Estoque</th>
-                    <th className="p-3">Custo</th>
-                    <th className="p-3">Venda</th>
+                    <th className="p-3 text-center">Estoque</th>
+                    <th className="p-3">Custo Limpo</th>
+                    <th className="p-3">Venda Limpa</th>
+                    <th className="p-3 text-center">Link Foto</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-200 dark:divide-stone-800">
                   {dadosPrevia.slice(0, 50).map((row, i) => (
                     <tr key={i} className="hover:bg-stone-100 dark:hover:bg-stone-800/50">
-                      <td className="p-3 font-mono font-bold text-[#A67B5B]">{row['CÓD. PRÓDUTO']}</td>
-                      <td className="p-3 text-stone-700 dark:text-stone-300 truncate max-w-xs">{row['NOME DO PRODUTO']}</td>
-                      <td className="p-3 font-bold">{row['ESTOQUE ATUAL']}</td>
-                      <td className="p-3">R$ {row['CUSTO UNITÁRIO R$']}</td>
-                      <td className="p-3">R$ {row['VALOR DE VENDA']}</td>
+                      <td className="p-3 font-mono font-bold text-[#A67B5B]">{getCol(row, 'CÓD. PRÓDUTO', 'CÓD')}</td>
+                      <td className="p-3 text-stone-700 dark:text-stone-300 truncate max-w-[200px]">{getCol(row, 'NOME DO PRODUTO', 'NOME')}</td>
+                      <td className="p-3 font-black text-center text-emerald-600">{parseInt(getCol(row, 'ESTOQUE ATUAL', 'ESTOQUE')) || 0}</td>
+                      <td className="p-3">R$ {limparMoeda(getCol(row, 'CUSTO UNITÁRIO R$', 'CUSTO')).toFixed(2)}</td>
+                      <td className="p-3">R$ {limparMoeda(getCol(row, 'VALOR DE VENDA', 'VENDA')).toFixed(2)}</td>
+                      <td className="p-3 text-center">
+                        {getCol(row, 'LINK REF', 'LINK').includes('http') ? <LinkIcon size={14} className="text-blue-500 mx-auto"/> : '-'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {dadosPrevia.length > 50 && (
+                <div className="p-3 text-center text-xs text-stone-500 bg-white dark:bg-stone-900 border-t border-stone-200 dark:border-stone-800 sticky bottom-0">
+                  Mostrando apenas as 50 primeiras linhas. O restante será processado.
+                </div>
+              )}
             </div>
             
             <button 
@@ -210,7 +239,7 @@ export default function MigracaoPage() {
         )}
 
         {logs.length > 0 && (
-          <div className="bg-stone-950 rounded-xl p-4 h-64 overflow-y-auto border border-stone-800 shadow-inner">
+          <div className="bg-stone-950 rounded-xl p-4 h-64 overflow-y-auto border border-stone-800 shadow-inner mt-4">
             <h4 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
               <Database size={14}/> Console de Operações
             </h4>
