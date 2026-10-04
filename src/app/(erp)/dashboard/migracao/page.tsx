@@ -4,18 +4,17 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Database, UploadCloud, CheckCircle2, Loader2, ArrowRight, FileSpreadsheet, XCircle } from "lucide-react";
-import Papa from "papaparse"; // 👈 A biblioteca mais famosa do mundo para ler CSVs no navegador
+import Papa from "papaparse";
 
 export default function MigracaoPage() {
   const supabase = createClient();
   const [processando, setProcessando] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
-  const [dadosPrevia, setDadosPrevia] = useState<any[]>([]); // Para mostrar o que foi lido antes de salvar
+  const [dadosPrevia, setDadosPrevia] = useState<any[]>([]);
   const [arquivoCarregado, setArquivoCarregado] = useState(false);
 
   const addLog = (msg: string) => setLogs(prev => [...prev, msg]);
 
-  // Função matemática para converter string de dinheiro do Excel (R$ 1.500,00) em Decimal (1500.00)
   const limparMoeda = (val: string) => {
     if (!val) return 0.0;
     let limpo = String(val).replace('R$', '').replace(/\s/g, '').trim();
@@ -27,7 +26,6 @@ export default function MigracaoPage() {
     return parseFloat(limpo) || 0.0;
   };
 
-  // 1. LEITURA MÁGICA DO ARQUIVO CSV
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -37,13 +35,10 @@ export default function MigracaoPage() {
     addLog(`📄 Lendo o arquivo: ${file.name}...`);
 
     Papa.parse(file, {
-      header: true, // Avisa que a primeira linha é o nome das colunas
+      header: true,
       skipEmptyLines: true,
       complete: function(results) {
-        // results.data é um array de objetos onde cada chave é o nome da coluna do Excel
         const dadosLidos = results.data as any[];
-        
-        // Filtra para remover linhas "Totais" ou lixo do rodapé
         const dadosLimpos = dadosLidos.filter(row => {
           const cod = String(row['CÓD. PRÓDUTO'] || '');
           return cod && cod.trim() !== '' && !cod.toUpperCase().includes('TOTAIS');
@@ -60,14 +55,13 @@ export default function MigracaoPage() {
     });
   };
 
-  // 2. INJEÇÃO DE DADOS (ETL: Extract, Transform, Load)
   const iniciarMigracao = async () => {
     if (dadosPrevia.length === 0) return;
 
     setProcessando(true);
     addLog("🚀 Iniciando motor de injeção no Supabase...");
     
-    // 🔥 FORÇAR REFRESH DO CACHE (O antídoto pro seu erro anterior)
+    // Força limpeza do cache do Supabase
     await supabase.rpc('pgrst_reload_schema'); 
 
     let paisCriados: Record<string, string> = {}; 
@@ -91,13 +85,15 @@ export default function MigracaoPage() {
       try {
         let idPai = paisCriados[baseCod];
 
+        // 1. SE O PAI AINDA NÃO EXISTE, CRIA ELE (PAYLOAD SIMPLIFICADO)
         if (!idPai) {
           addLog(`📦 Criando Produto Pai: ${baseCod}`);
+          
+          // O Erro 400 Bad Request acontecia aqui. Removemos colunas polêmicas (descricao, is_destaque) 
+          // e deixamos o banco usar seus próprios valores DEFAULT.
           const { data: paiData, error: paiError } = await supabase.from('produtos').insert({
             nome_base: nomeProduto.split('-')[0].trim(),
-            descricao: "Produto importado do sistema legado",
-            categoria: "Geral",
-            is_destaque: true
+            categoria: "Geral"
           }).select('id').single();
 
           if (paiError) throw paiError;
@@ -127,12 +123,18 @@ export default function MigracaoPage() {
           countSucesso++;
         }
       } catch (err: any) {
-        addLog(`❌ Falha no código ${codProduto}: ${err.message}`);
+        addLog(`❌ Falha no código ${codProduto}: ${err.message || 'Erro HTTP 400: Estrutura recusada'}`);
       }
     }
 
-    addLog(`🎉 Sucesso! ${countSucesso} SKUs injetados.`);
-    toast.success("Banco de dados populado com sucesso!");
+    if (countSucesso > 0) {
+        addLog(`🎉 Sucesso! ${countSucesso} SKUs injetados com perfeição.`);
+        toast.success(`${countSucesso} produtos migrados!`);
+    } else {
+        addLog(`⚠️ Nenhum produto foi injetado. Verifique os erros acima.`);
+        toast.error("Falha na migração.");
+    }
+    
     setProcessando(false);
   };
 
@@ -157,22 +159,15 @@ export default function MigracaoPage() {
           )}
         </div>
 
-        {/* 🚀 ÁREA DE DROP / UPLOAD */}
         {!arquivoCarregado && (
           <div className="w-full border-2 border-dashed border-indigo-200 dark:border-indigo-500/30 rounded-2xl p-12 bg-stone-50 dark:bg-stone-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:border-indigo-400 transition-all cursor-pointer group mb-6 relative text-center">
              <FileSpreadsheet size={64} className="mx-auto text-indigo-300 dark:text-indigo-600 mb-4 group-hover:text-indigo-500 group-hover:-translate-y-2 transition-all" />
              <p className="text-lg font-black text-stone-700 dark:text-stone-300 mb-2">Selecione o arquivo CSV do Inventário</p>
-             <p className="text-sm text-stone-500 max-w-md mx-auto">Vá na sua planilha do Google, clique em <b>Arquivo &gt; Fazer download &gt; Valores separados por vírgula (.csv)</b> e envie aqui.</p>
-             <input 
-                type="file" 
-                accept=".csv"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-                onChange={handleFileUpload} 
-              />
+             <p className="text-sm text-stone-500 max-w-md mx-auto">Baixe a aba "INVENTÁRIO" do Google Sheets como .csv e envie aqui.</p>
+             <input type="file" accept=".csv" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFileUpload} />
           </div>
         )}
 
-        {/* 📊 PRÉVIA DOS DADOS */}
         {arquivoCarregado && (
           <div className="mb-8 animate-in fade-in slide-in-from-bottom-4">
             <h3 className="text-sm font-bold text-stone-400 uppercase tracking-widest mb-3">Prévia dos Dados Lidos ({dadosPrevia.length} linhas)</h3>
@@ -199,11 +194,6 @@ export default function MigracaoPage() {
                   ))}
                 </tbody>
               </table>
-              {dadosPrevia.length > 50 && (
-                <div className="p-3 text-center text-xs text-stone-500 bg-white dark:bg-stone-900 border-t border-stone-200 dark:border-stone-800 sticky bottom-0">
-                  Mostrando apenas as 50 primeiras linhas. O restante será processado.
-                </div>
-              )}
             </div>
             
             <button 
@@ -217,7 +207,6 @@ export default function MigracaoPage() {
           </div>
         )}
 
-        {/* 💻 TERMINAL DE LOGS */}
         {logs.length > 0 && (
           <div className="bg-stone-950 rounded-xl p-4 h-64 overflow-y-auto border border-stone-800 shadow-inner">
             <h4 className="text-stone-500 text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
